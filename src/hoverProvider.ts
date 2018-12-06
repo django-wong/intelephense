@@ -20,7 +20,7 @@ export class HoverProvider {
 
     provideHover(uri: string, pos: Position): Hover {
 
-
+        const openTag = '<?php\n';
         let doc = this.docStore.find(uri);
         let table = this.refStore.getReferenceTable(uri);
 
@@ -45,32 +45,59 @@ export class HoverProvider {
             case SymbolKind.Function:
             case SymbolKind.Method:
                 return {
-                    contents: [this.modifiersToString(symbol.modifiers), symbol.name + PhpSymbol.signatureString(symbol)].join(' ').trim(),
+                    contents: [{
+                        language: 'php',
+                        value: openTag + [
+                            this.modifiersToString(symbol.modifiers),
+                            symbol.name + PhpSymbol.signatureString(symbol)
+                        ].join(' ').trim(),
+                    }, symbol.doc ? `${symbol.doc.description}\n` : ''],
                     range: ref.location.range
                 };
 
             case SymbolKind.Parameter:
                 return {
-                    contents: [PhpSymbol.type(symbol) || 'mixed', symbol.name].join(' ').trim(),
+                    contents: [
+                        PhpSymbol.type(symbol) || 'mixed',
+                        `*${symbol.name}*`
+                    ].join(' ').trim(),
                     range: ref.location.range
                 };
 
             case SymbolKind.Property:
                 return {
-                    contents: [this.modifiersToString(symbol.modifiers), PhpSymbol.type(symbol) || 'mixed', symbol.name].join(' ').trim(),
+                    contents: {
+                        language: 'php',
+                        value: openTag + [
+                            this.modifiersToString(symbol.modifiers),
+                            PhpSymbol.type(symbol) || 'mixed',
+                            symbol.name
+                        ].join(' ').trim(),
+                    },
                     range: ref.location.range
                 };
 
             case SymbolKind.Variable:
                 return {
-                    contents: [ref.type, symbol.name].join(' ').trim(),
+                    contents: [
+                        ref.type,
+                        `*${symbol.name}*`
+                    ].join(' ').trim(),
                     range: ref.location.range
                 };
 
             case SymbolKind.Constant:
             case SymbolKind.ClassConstant:
                 return {
-                    contents: [this.modifiersToString(symbol.modifiers), 'const', symbol.name, symbol.value ? `= ${symbol.value}` : ''].join(' ').trim(),
+                    contents: {
+                        language: 'php',
+                        value: openTag + [
+                            this.modifiersToString(symbol.modifiers),
+                            'const',
+                            symbol.name,
+                            symbol.value ? `= ${symbol.value}` : ''
+                        ].join(' ').trim(),
+                    },
                     range: ref.location.range
                 }
 
